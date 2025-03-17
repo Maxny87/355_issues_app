@@ -24,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         // prepare the SQL statement to prevent SQL injection
         $stmt = $conn->prepare("SELECT id, fname, lname, pwd_hash, pwd_salt FROM iss_persons WHERE email = ?");
-        // Note: bind_param() is a MySQLi method. For PDO use bindValue() or pass the parameter directly.
         $stmt->bindValue(1, $email, PDO::PARAM_STR);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -91,8 +90,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <label for="password" class="form-label">Password:</label>
                             <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
                         </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Login</button>
+                        <div class="row">
+                            <div class="col">
+                                <button type="submit" class="btn btn-primary w-100">Login</button>
+                            </div>
+                            <div class="col">
+                                <a href="register.php" class="btn btn-secondary w-100">Register</a>
+                            </div>
                         </div>
                     </form>
                 </div>
