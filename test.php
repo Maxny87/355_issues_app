@@ -4,7 +4,7 @@ $db_user = "root";
 $db_pass = "";
 $dbname = "issues_app";
 
-$pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8mb4", $db_user, $db_pass);
+$pdo = new PDO("mysql:host=$servername;port=3307;dbname=$dbname;charset=utf8mb4", $db_user, $db_pass);
 echo "Connected successfully </br>";
 
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -14,4 +14,6 @@ $id = 1;
 $q->execute(array($id));
 $data = $q->fetch(PDO::FETCH_ASSOC);
 print_r($data);
+
+echo "Hello";
 ?>
