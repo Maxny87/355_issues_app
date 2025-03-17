@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <h3 class="mb-0">Login</h3>
                 </div>
                 <div class="card-body">
-                    <form action="login.php" method="post">
+                    <form action="login2.php" method="post">
                         <div class="mb-3">
                             <label for="email" class="form-label">Email:</label>
                             <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email" required>
