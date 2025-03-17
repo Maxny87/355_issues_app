@@ -25,6 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Please fill in all required fields.";
     } elseif ($password !== $confirm_password) {
         $error = "Passwords do not match.";
+    } elseif (!preg_match('/@svsu\.edu$/', $email)) { // Check if email ends with @svsu.edu
+        $error = "Registration is limited to SVSU email addresses.";
     } else {
         // optionally, check if the email is already registered
         $stmt = $conn->prepare("SELECT id FROM iss_persons WHERE email = :email");
