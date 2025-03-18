@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 require_once './database/database.php';
 
@@ -34,20 +38,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($stmt->fetch(PDO::FETCH_ASSOC)) {
             $error = "This email is already registered. Please use another email or login.";
         } else {
-            // generate a salt (16 hex characters)
-            $salt = bin2hex(random_bytes(8));
-            // compute the md5 hash of the password concatenated with the salt
-            $pwd_hash = md5($password . $salt);
+            // using more secure method to hash and generate salts
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
             // insert the new user into the iss_persons table
-            $stmt = $conn->prepare("INSERT INTO iss_persons (fname, lname, mobile, email, pwd_hash, pwd_salt, admin) VALUES (:fname, :lname, :mobile, :email, :pwd_hash, :pwd_salt, :admin)");
+            $stmt = $conn->prepare("INSERT INTO iss_persons (fname, lname, mobile, email, pwd_hash, admin) VALUES (:fname, :lname, :mobile, :email, :pwd_hash, :admin)");
             $result = $stmt->execute([
                 'fname'     => $fname,
                 'lname'     => $lname,
                 'mobile'    => $mobile,
                 'email'     => $email,
-                'pwd_hash'  => $pwd_hash,
-                'pwd_salt'  => $salt,
+                'pwd_hash'  => $hashed_password,
                 'admin'     => 'N'
             ]);
 

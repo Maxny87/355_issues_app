@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 // password is stored as md5 hash and salt is stored as plain text
 
@@ -23,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Please enter both email and password.";
     } else {
         // prepare the SQL statement to prevent SQL injection
-        $stmt = $conn->prepare("SELECT id, fname, lname, pwd_hash, pwd_salt FROM iss_persons WHERE email = ?");
+        $stmt = $conn->prepare("SELECT id, fname, lname, pwd_hash FROM iss_persons WHERE email = ?");
         $stmt->bindValue(1, $email, PDO::PARAM_STR);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -36,15 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             // hash the provided password with the stored salt (assuming the password was hashed as: md5($password . $salt))
             $computed_hash = md5($password . $salt);
-
-            // verify the password
-            if ($computed_hash === $stored_hash) {
-                // set session variables for the logged in user
+            if (password_verify($password, $row['pwd_hash'])) {
                 $_SESSION['user_id'] = $row['id'];
                 $_SESSION['fname'] = $row['fname'];
                 $_SESSION['lname'] = $row['lname'];
 
-                // redirect to the issues list.
                 header("Location: issues_list.php");
                 exit();
             } else {
