@@ -14,8 +14,9 @@ $issue_id = $_GET['id'];
 $conn = new PDO($connstring, $db_user, $db_pass);
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Handle comment submission
+// handle comment submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['short_comment'], $_POST['long_comment'])) {
+    // creating a new comment when they press add comment button
     $stmt = $conn->prepare("INSERT INTO iss_comments (per_id, iss_id, short_comment, long_comment, posted_date, resolved)
                             VALUES (:per_id, :iss_id, :short, :long, CURDATE(), 0)");
     $stmt->execute([
@@ -28,20 +29,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['short_comment'], $_POS
     exit;
 }
 
-// Fetch issue
+// fetch issue
 $stmt = $conn->prepare("SELECT * FROM iss_issues WHERE id = :id");
 $stmt->execute(['id' => $issue_id]);
 $issue = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Fetch comments (resolved at bottom)
+// fetch comments (resolved at bottom)
 $stmt = $conn->prepare("SELECT * FROM iss_comments WHERE iss_id = :id ORDER BY resolved ASC, posted_date DESC");
 $stmt->execute(['id' => $issue_id]);
 $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$is_owner_or_admin = (
-    isset($_SESSION['user_id']) &&
-    ($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == 'Y')
-);
+$is_owner_or_admin = (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == 'Y')); // checking if they are the owner or the admin of the issue
 ?>
 <!DOCTYPE html>
 <html lang="en">

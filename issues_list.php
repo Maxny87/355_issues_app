@@ -175,8 +175,9 @@ $total_pages_res = ceil($total_resolved / $limit);
             <td>
                 <a href="issue_details.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-primary">View</a>
                 <?php if ($_SESSION['admin'] === 'Y' || $_SESSION['user_id'] == $row['per_id']) : ?>
-                    <form action="mark_resolved.php" method="post" class="d-inline">
+                    <form action="toggle_issue_resolved.php" method="post" class="d-inline">
                         <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                        <input type="hidden" name="current_status" value="0">
                         <button type="submit" class="btn btn-sm btn-warning">Resolve</button>
                     </form>
                     <form action="delete_issue.php" method="post" class="d-inline" onsubmit="return confirm('Delete this issue?');">
@@ -228,8 +229,9 @@ $total_pages_res = ceil($total_resolved / $limit);
             <td>
             <a href="issue_details.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-primary">View</a>
             <?php if ($_SESSION['admin'] === 'Y' || $_SESSION['user_id'] == $row['per_id']) : ?>
-                <form action="unresolve_issue.php" method="post" class="d-inline">
+                <form action="toggle_issue_resolved.php" method="post" class="d-inline">
                     <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                    <input type="hidden" name="current_status" value="1">
                     <button type="submit" class="btn btn-sm btn-warning">Unresolve</button>
                 </form>
                 <form action="delete_issue.php" method="post" class="d-inline" onsubmit="return confirm('Delete this issue?');">
