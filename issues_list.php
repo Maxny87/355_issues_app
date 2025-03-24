@@ -61,7 +61,7 @@ if ($person_filter) {
 
 $where_clause = $where ? ' AND ' . implode(' AND ', $where) : '';
 
-$unres_sql = "SELECT iss_issues.*, iss_persons.fname, iss_persons.lname FROM iss_issues JOIN iss_persons ON iss_issues.per_id = iss_persons.id WHERE resolved = 0 $where_clause ORDER BY open_date DESC LIMIT :limit OFFSET :offset";
+$unres_sql = "SELECT iss_issues.*, iss_persons.fname, iss_persons.lname FROM iss_issues LEFT JOIN iss_persons ON iss_issues.per_id = iss_persons.id WHERE resolved = 0 $where_clause ORDER BY open_date DESC LIMIT :limit OFFSET :offset";
 $unres_stmt = $conn->prepare($unres_sql);
 foreach ($params as $key => $val) $unres_stmt->bindValue($key, $val);
 $unres_stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -74,7 +74,7 @@ $count_unres->execute($params);
 $total_unresolved = $count_unres->fetchColumn();
 $total_pages_unres = ceil($total_unresolved / $limit);
 
-$res_sql = "SELECT iss_issues.*, iss_persons.fname, iss_persons.lname FROM iss_issues JOIN iss_persons ON iss_issues.per_id = iss_persons.id WHERE resolved = 1 $where_clause ORDER BY open_date DESC LIMIT :limit OFFSET :offset";
+$res_sql = "SELECT iss_issues.*, iss_persons.fname, iss_persons.lname FROM iss_issues LEFT JOIN iss_persons ON iss_issues.per_id = iss_persons.id WHERE resolved = 1 $where_clause ORDER BY open_date DESC LIMIT :limit OFFSET :offset";
 $res_stmt = $conn->prepare($res_sql);
 foreach ($params as $key => $val) $res_stmt->bindValue($key, $val);
 $res_stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -171,7 +171,7 @@ $total_pages_res = ceil($total_resolved / $limit);
             <td><?= $row['priority'] ?></td>
             <td><?= $row['project'] ?></td>
             <td><?= $row['org'] ?></td>
-            <td><?= $row['fname'] . ' ' . $row['lname'] ?></td>
+            <td><?= isset($row['fname']) ? $row['fname'] . ' ' . $row['lname'] : '<em>Unknown</em>' ?></td>
             <td>
                 <a href="issue_details.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-primary">View</a>
                 <?php if ($_SESSION['admin'] === 'Y' || $_SESSION['user_id'] == $row['per_id']) : ?>
@@ -225,7 +225,7 @@ $total_pages_res = ceil($total_resolved / $limit);
             <td><?= $row['priority'] ?></td>
             <td><?= $row['project'] ?></td>
             <td><?= $row['org'] ?></td>
-            <td><?= $row['fname'] . ' ' . $row['lname'] ?></td>
+            <td><?= isset($row['fname']) ? $row['fname'] . ' ' . $row['lname'] : '<em>Unknown</em>' ?></td>
             <td>
             <a href="issue_details.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-primary">View</a>
             <?php if ($_SESSION['admin'] === 'Y' || $_SESSION['user_id'] == $row['per_id']) : ?>
