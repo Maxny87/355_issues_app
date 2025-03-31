@@ -49,12 +49,28 @@ $is_owner_or_admin = (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $i
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="container mt-4">
-<h2>Issue #<?= $issue['id'] ?> Details <?= $issue['resolved'] ? '<span class="text-success">&#10003;</span>' : '' ?></h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">
+        Issue #<?= $issue['id'] ?>
+        <span class="text-muted small ms-2"><?= $issue['open_date'] ?></span>
+    </h2>
+    <span class="badge fs-6 <?= $issue['resolved'] ? 'bg-success' : 'bg-warning text-dark' ?>">
+        <?= $issue['resolved'] ? 'Resolved' : 'Unresolved' ?>
+    </span>
+</div>
 <p><strong>Short:</strong> <?= htmlspecialchars($issue['short_description']) ?></p>
 <p><strong>Long:</strong> <?= nl2br(htmlspecialchars($issue['long_description'])) ?></p>
 <p><strong>Priority:</strong> <?= $issue['priority'] ?></p>
 <p><strong>Open Date:</strong> <?= $issue['open_date'] ?></p>
-<p><strong>Close Date:</strong> <?= $issue['close_date'] ?></p>
+<?php if ($issue['close_date'] !== '0000-00-00'): ?>
+    <p><strong>Close Date:</strong> <?= $issue['close_date'] ?></p>
+<?php endif; ?>
+<?php
+if (!empty($issue['pdf_attachment'])) {
+    $pdfPath = './uploads/' . htmlspecialchars($issue['pdf_attachment']);
+    echo "<p><strong>Attachment:</strong> <a href='$pdfPath' target='_blank'>View PDF</a></p>";
+}
+?>
 
 <?php if ($is_owner_or_admin): ?>
     <a href="edit_issue.php?id=<?= $issue['id'] ?>" class="btn btn-warning mb-3">Edit Issue</a>

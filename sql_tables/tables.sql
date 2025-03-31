@@ -42,6 +42,8 @@ ALTER TABLE `iss_issues`
     MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 COMMIT;
 
+ALTER TABLE iss_issues ADD COLUMN pdf_attachment VARCHAR(255);
+
 CREATE TABLE `iss_comments` (
     `id` int(11) NOT NULL,
     `per_id` int(11) NOT NULL,

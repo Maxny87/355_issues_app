@@ -28,7 +28,38 @@ $users = $conn->query("SELECT id, fname, lname FROM iss_persons ORDER BY lname")
 
 // if second time we are here and we have post method with details we edit the issue
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $stmt = $conn->prepare("UPDATE iss_issues SET short_description = :short, long_description = :long, priority = :priority, project = :project, org = :org, per_id = :per_id WHERE id = :id");
+
+    $newPdfName = $issue['pdf_attachment']; // default to existing
+
+    // handle delete request if they select the delete box
+    if (isset($_POST['delete_pdf']) && $issue['pdf_attachment']) {
+        $pdfPath = __DIR__ . '/uploads/' . $issue['pdf_attachment'];
+        if (file_exists($pdfPath)) {
+            unlink($pdfPath); // delete the file
+        }
+        $newPdfName = null;
+    }
+
+    // handle new file upload (only if there wasn't one before)
+    if (empty($issue['pdf_attachment']) && isset($_FILES['pdf_attachment']) && $_FILES['pdf_attachment']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['pdf_attachment']['tmp_name'];
+        $fileName = $_FILES['pdf_attachment']['name'];
+        $fileSize = $_FILES['pdf_attachment']['size'];
+        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        if ($fileExtension === 'pdf' && $fileSize <= 2 * 1024 * 1024) {
+            $newPdfName = md5(time() . $fileName) . '.pdf';
+            $destination = __DIR__ . '/uploads/' . $newPdfName;
+            move_uploaded_file($fileTmpPath, $destination);
+        }
+    }
+
+
+    $stmt = $conn->prepare("UPDATE iss_issues 
+    SET short_description = :short, long_description = :long, priority = :priority, 
+        project = :project, org = :org, per_id = :per_id, pdf_attachment = :pdf 
+    WHERE id = :id");
+
     $stmt->execute([
         'short' => $_POST['short_description'],
         'long' => $_POST['long_description'],
@@ -36,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'project' => $_POST['project'],
         'org' => $_POST['org'],
         'per_id' => $_POST['per_id'],
+        'pdf' => $newPdfName,
         'id' => $id
     ]);
     header("Location: issue_details.php?id=" . $id);
@@ -52,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body class="container mt-4">
 <h2>Edit Issue</h2>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     <div class="mb-3">
         <label>Short Description</label>
         <input type="text" name="short_description" value="<?= htmlspecialchars($issue['short_description']) ?>" class="form-control" required>
@@ -86,6 +118,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </option>
             <?php endforeach; ?>
         </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">PDF Attachment</label>
+        <?php if (!empty($issue['pdf_attachment'])): ?>
+            <p>
+                Current PDF:
+                <a href="./uploads/<?= htmlspecialchars($issue['pdf_attachment']) ?>" target="_blank">
+                    View Attachment
+                </a>
+            </p>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="delete_pdf" value="1" id="delete_pdf">
+                <label class="form-check-label" for="delete_pdf">
+                    Delete this attachment
+                </label>
+            </div>
+        <?php else: ?>
+            <input type="file" name="pdf_attachment" accept="application/pdf" class="form-control">
+        <?php endif; ?>
     </div>
     <button type="submit" class="btn btn-success">Update Issue</button>
     <a href="issue_details.php?id=<?= $id ?>" class="btn btn-secondary">Cancel</a>

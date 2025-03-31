@@ -53,6 +53,9 @@ if ($person_filter) {
     if ($person_filter === 'self') {
         $where[] = "per_id = :self_id";
         $params[':self_id'] = $_SESSION['user_id'];
+    } elseif ($person_filter === 'org') {
+        // for issues that have a person id not in the users table
+        $where[] = "iss_persons.id IS NULL";
     } else {
         $where[] = "per_id = :person";
         $params[':person'] = $person_filter;
@@ -102,6 +105,7 @@ $total_pages_res = ceil($total_resolved / $limit);
         <p class="me-3 mb-0">Welcome, <strong><?= $_SESSION['fname'] ?? 'User' ?></strong></p>
         <?php if ($_SESSION['admin'] === 'Y') : ?>
             <a href="list_users.php" class="btn btn-outline-secondary me-2 btn-sm">View Users</a>
+            <a href="export_csv.php" class="btn btn-outline-secondary me-2 btn-sm">Export CSV</a>
         <?php endif; ?>
         <form action="logout.php" method="post">
             <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
@@ -135,6 +139,7 @@ $total_pages_res = ceil($total_resolved / $limit);
                 <select name="person" class="form-select">
                     <option value="">All</option>
                     <option value="self" <?= $person_filter === 'self' ? 'selected' : '' ?>>My Issues</option>
+                    <option value="unknown" <?= $person_filter === 'unknown' ? 'selected' : '' ?>><em>Unknown</em></option>
                     <?php foreach ($persons as $p): if ($p['id'] == $_SESSION['user_id']) continue; ?>
                         <option value="<?= $p['id'] ?>" <?= $person_filter == $p['id'] ? 'selected' : '' ?>><?= $p['fname'] . ' ' . $p['lname'] ?></option>
                     <?php endforeach; ?>

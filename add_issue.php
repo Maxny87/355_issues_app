@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 require_once './database/database.php';
 
@@ -19,10 +23,45 @@ try {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
+        $newFileName = null;
+        if (isset($_FILES['pdf_attachment']) && $_FILES ['pdf_attachment']['error'] === UPLOAD_ERR_OK) {
+            $fileTmpPath = $_FILES['pdf_attachment']['tmp_name'];
+            $fileName = $_FILES['pdf_attachment']['name'];
+            $fileSize = $_FILES['pdf_attachment']['size'];
+            $fileType = $_FILES['pdf_attachment']['type'];
+            $fileNameCmps = explode(".", $fileName); // explode function makes an array of words separated by the filename and extension
+            $fileExtension = strtolower(end($fileNameCmps)); // last element of the explode array
+
+            if ( $fileExtension !== 'pdf') {
+                die ("Only PDF files are allowed.") ; // dont want to kill entire program
+            }
+
+            if ( $fileSize > 2 * 1024 * 1024) {
+                die ("File size exceeds 2 MB limit.") ; // dont want to kill entire program
+            }
+
+            $newFileName = MD5(time() . $fileName) . "." . $fileExtension; // timestamp it so its unique
+            $uploadFileDirectory = './uploads/';
+            $destination = $uploadFileDirectory . $newFileName;
+
+            if (!is_dir($uploadFileDirectory)) {
+                mkdir($uploadFileDirectory, 0755, true);
+            }
+
+            if (move_uploaded_file($fileTmpPath, $destination)) {
+                $attachmentPath = $newFileName;
+            } else {
+                $error = error_get_last();
+                die("Error uploading file: " . $error['message']);
+//                $attachmentPath = null;
+            }
+        } else {
+            $attachmentPath = null;
+        }
         // add the issue
         $stmt = $conn->prepare("INSERT INTO iss_issues 
-            (short_description, long_description, open_date, close_date, priority, org, project, per_id, resolved) 
-            VALUES (:short, :long, CURDATE(), '0000-00-00', :priority, :org, :project, :per_id, 0)");
+            (short_description, long_description, open_date, close_date, priority, org, project, per_id, resolved, pdf_attachment) 
+            VALUES (:short, :long, CURDATE(), '0000-00-00', :priority, :org, :project, :per_id, 0, :pdf_attachment)");
 
         $stmt->execute([
             'short' => $_POST['short_description'],
@@ -30,7 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'priority' => $_POST['priority'],
             'org' => $_POST['org'],
             'project' => $_POST['project'],
-            'per_id' => $_POST['per_id']
+            'per_id' => $_POST['per_id'],
+            'pdf_attachment' => $newFileName,
         ]);
 
         header("Location: issues_list.php");
@@ -50,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body class="container mt-4">
 <h2>Add New Issue</h2>
-<form method="post">
+<form method="post" enctype="multipart/form-data" >
     <div class="mb-3">
         <label class="form-label">Short Description</label>
         <input type="text" name="short_description" class="form-control" required>
@@ -84,6 +124,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </option>
             <?php endforeach; ?>
         </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">PDF Attachment (Max 2MB)</label>
+        <input type="file" name="pdf_attachment" accept="application/pdf" class="form-control">
     </div>
     <button type="submit" class="btn btn-success">Submit</button>
     <a href="issues_list.php" class="btn btn-secondary">Back</a>
