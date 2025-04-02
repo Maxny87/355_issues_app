@@ -72,6 +72,7 @@ if (!empty($issue['pdf_attachment'])) {
 }
 ?>
 
+<a href="issues_list.php" class="btn btn-secondary mb-3">Back</a>
 <?php if ($is_owner_or_admin): ?>
     <a href="edit_issue.php?id=<?= $issue['id'] ?>" class="btn btn-warning mb-3">Edit Issue</a>
     <form action="toggle_issue_resolved.php" method="post" style="display:inline;">
@@ -157,7 +158,7 @@ $resolved = array_filter($comments, fn($c) => $c['resolved'] == 1);
         <textarea name="long_comment" class="form-control" required></textarea>
     </div>
     <button type="submit" class="btn btn-primary">Add Comment</button>
-    <a href="issues_list.php" class="btn btn-secondary">Back</a>
+<!--    <a href="issues_list.php" class="btn btn-secondary">Back</a>-->
 </form>
 </body>
 </html>

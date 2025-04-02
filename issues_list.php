@@ -138,7 +138,7 @@ $total_pages_res = ceil($total_resolved / $limit);
                 <label class="form-label">Person</label>
                 <select name="person" class="form-select">
                     <option value="">All</option>
-                    <option value="self" <?= $person_filter === 'self' ? 'selected' : '' ?>>My Issues</option>
+                    <option value="self" <?= $person_filter === 'self' ? 'selected' : '' ?>>My Issues (<?= $_SESSION['fname'] . ' ' . $_SESSION['lname'] ?>) </option>
                     <option value="unknown" <?= $person_filter === 'unknown' ? 'selected' : '' ?>><em>Unknown</em></option>
                     <?php foreach ($persons as $p): if ($p['id'] == $_SESSION['user_id']) continue; ?>
                         <option value="<?= $p['id'] ?>" <?= $person_filter == $p['id'] ? 'selected' : '' ?>><?= $p['fname'] . ' ' . $p['lname'] ?></option>
