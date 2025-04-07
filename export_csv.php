@@ -69,7 +69,7 @@ if (isset($_POST['export'])) {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     header('Content-Type: text/csv');
-    header('Content-Disposition: attachment;filename=filtered_issues_export.csv');
+    header('Content-Disposition: attachment;filename=filtered_issues_list_export.csv');
     $output = fopen('php://output', 'w');
     fputcsv($output, ['ID', 'Short Description', 'Open Date', 'Close Date', 'Priority', 'Project', 'Org', 'Person', 'Resolved']);
 
