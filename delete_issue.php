@@ -32,7 +32,8 @@ if (!$issue) {
     die("Issue not found.");
 }
 
-if ($_SESSION['user_id'] != $issue['per_id'] && $_SESSION['admin'] !== 'Y') {
+if ($_SESSION['user_id'] != $issue['per_id'] && $_SESSION['admin'] !== 'Y') { // need to make sure they are the owner or admin
+    header("Location: issue_details.php");
     die("Unauthorized.");
 }
 

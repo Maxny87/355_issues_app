@@ -19,8 +19,10 @@ $stmt->execute(['id' => $id]);
 $issue = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // only the owner or admin can edit
-if ($_SESSION['user_id'] != $issue['per_id'] || $_SESSION['admin'] !== 'Y') {
-    die("Unauthorized access.");
+if ($_SESSION['user_id'] != $issue['per_id'] && $_SESSION['admin'] !== 'Y') {
+    header("Location: issue_details.php");
+    exit();
+//    die("Unauthorized access.");
 }
 
 // fetch users for the dropdown

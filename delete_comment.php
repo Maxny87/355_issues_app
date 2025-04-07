@@ -31,7 +31,7 @@ if (!$comment) { // comment not in db
 }
 
 // making sure access is only for an admin or comment owner
-if (!isset($_SESSION['user_id']) || ($_SESSION['user_id'] != $comment['per_id'] && $_SESSION['admin'] == 'N')) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['user_id'] != $comment['per_id'] && $_SESSION['admin'] !== 'Y')) {
     die("Unauthorized.");
 }
 

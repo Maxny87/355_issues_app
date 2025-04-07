@@ -10,6 +10,10 @@ if (!isset($_SESSION['user_id'])) { // making sure the user is logged in
 if ($_SESSION['admin'] !== 'Y') die("Access denied."); // need to be admin to delete a user
 if (!isset($_POST['id'])) die("User ID not provided.");
 
+if ($_POST['id'] == $_SESSION['user_id']) {
+    die("You cannot delete your own account.");
+}
+
 $conn = new PDO($connstring, $db_user, $db_pass);
 $stmt = $conn->prepare("DELETE FROM iss_persons WHERE id = ?");
 $stmt->execute([$_POST['id']]);

@@ -20,6 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $hashed = password_hash($password, PASSWORD_DEFAULT);
 
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM iss_persons WHERE email = ?");
+    $stmt->execute([$email]);
+    // need to make sure email does not exist already
+    if ($stmt->fetchColumn() > 0) {
+        die("Email already exists.");
+    }
+
     $conn = new PDO($connstring, $db_user, $db_pass);
     $stmt = $conn->prepare("INSERT INTO iss_persons (fname, lname, email, mobile, pwd_hash, admin) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->execute([$fname, $lname, $email, $mobile, $hashed, $admin]);

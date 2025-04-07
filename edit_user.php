@@ -27,6 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mobile = trim($_POST['mobile']);
     $admin = $_POST['admin'] === 'Y' ? 'Y' : 'N';
 
+    if ($_GET['id'] == $_SESSION['user_id'] && $_POST['admin'] === 'N') {
+        die("You cannot revoke your own admin rights.");
+    }
+
     // update password if entered
     if (!empty($_POST['password'])) {
         $hashed = password_hash($_POST['password'], PASSWORD_DEFAULT);
