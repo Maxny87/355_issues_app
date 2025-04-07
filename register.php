@@ -41,6 +41,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // using more secure method to hash and generate salts
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
+            $activation_code = bin2hex(random_bytes(16));
+            $hashed_activation_code = password_hash($activation_code, PASSWORD_DEFAULT);
+
+            $activation_link = "http://localhost/iss/355_issues_app/activate.php?email={$email}&activation_code={$activation_code}";
+
+            $subject = 'Issues App Activation Link';
+            $message = <<<MSG
+                Hi,
+                This is an email to activate your account for the issues app.
+                Click the link below to activate your account. 
+                {$activation_link}
+            MSG;
+            mail($email, $subject, $message);
+
             // insert the new user into the iss_persons table
             $stmt = $conn->prepare("INSERT INTO iss_persons (fname, lname, mobile, email, pwd_hash, admin) VALUES (:fname, :lname, :mobile, :email, :pwd_hash, :admin)");
             $result = $stmt->execute([

@@ -42,10 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 header("Location: issues_list.php");
                 exit();
             } else {
+
                 $error = "Invalid email or password.";
+                session_destroy();
             }
         } else {
             $error = "Invalid email or password.";
+            session_destroy();
         }
         $stmt = null;
         $conn = null;
@@ -94,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
                     </form>
                 </div>
-                <!-- Optionally, you could add a card footer with additional links or info -->
             </div>
         </div>
     </div>

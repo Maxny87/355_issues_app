@@ -7,6 +7,7 @@ error_reporting(E_ALL);
 session_start();
 
 if (!isset($_SESSION['user_id'])) { // making sure the user is logged in
+    session_destroy();
     header("Location: login2.php");
     exit();
 }
