@@ -6,46 +6,58 @@ error_reporting(E_ALL);
 session_start();
 require_once './database/database.php';
 
-if (!isset($_SESSION['user_id'])) { // making sure the user is logged in
+if (!isset($_SESSION['user_id'])) {
     header("Location: login2.php");
     exit();
 }
 
-if ($_SESSION['admin'] !== 'Y') die("Access denied."); // only admin can access edit user
-if (!isset($_GET['id'])) die("User ID not provided."); // need user id to edit
+if ($_SESSION['admin'] !== 'Y') die("Access denied.");
+if (!isset($_GET['id'])) die("User ID not provided.");
 
 $user_id = $_GET['id'];
 
 $conn = new PDO($connstring, $db_user, $db_pass);
 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// handle form submission
+// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fname = trim($_POST['fname']);
     $lname = trim($_POST['lname']);
     $email = trim($_POST['email']);
     $mobile = trim($_POST['mobile']);
     $admin = $_POST['admin'] === 'Y' ? 'Y' : 'N';
+    $activate = isset($_POST['activate']) ? true : false;
 
     if ($_GET['id'] == $_SESSION['user_id'] && $_POST['admin'] === 'N') {
         die("You cannot revoke your own admin rights.");
     }
 
-    // update password if entered
+    // Update with password if set
     if (!empty($_POST['password'])) {
         $hashed = password_hash($_POST['password'], PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("UPDATE iss_persons SET fname=?, lname=?, email=?, mobile=?, admin=?, pwd_hash=? WHERE id=?");
-        $stmt->execute([$fname, $lname, $email, $mobile, $admin, $hashed, $user_id]);
+        $sql = "UPDATE iss_persons SET fname=?, lname=?, email=?, mobile=?, admin=?, pwd_hash=?";
+        $params = [$fname, $lname, $email, $mobile, $admin, $hashed];
     } else {
-        $stmt = $conn->prepare("UPDATE iss_persons SET fname=?, lname=?, email=?, mobile=?, admin=? WHERE id=?");
-        $stmt->execute([$fname, $lname, $email, $mobile, $admin, $user_id]);
+        $sql = "UPDATE iss_persons SET fname=?, lname=?, email=?, mobile=?, admin=?";
+        $params = [$fname, $lname, $email, $mobile, $admin];
     }
+
+    // Handle activation
+    if ($activate) {
+        $sql .= ", active=1, activation_code=NULL, activation_expiry=NULL";
+    }
+
+    $sql .= " WHERE id=?";
+    $params[] = $user_id;
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
 
     header("Location: list_users.php");
     exit;
 }
 
-// fetch user info
+// Fetch user info
 $stmt = $conn->prepare("SELECT * FROM iss_persons WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -89,6 +101,12 @@ if (!$user) die("User not found.");
         <label>New Password (optional)</label>
         <input type="password" name="password" class="form-control" placeholder="Leave blank to keep existing">
     </div>
+    <?php if ($user['active'] != 1): ?>
+        <div class="form-check mb-3">
+            <input type="checkbox" name="activate" class="form-check-input" id="activateUser">
+            <label for="activateUser" class="form-check-label">Activate User</label>
+        </div>
+    <?php endif; ?>
     <button class="btn btn-primary">Save Changes</button>
     <a href="list_users.php" class="btn btn-secondary">Cancel</a>
 </form>

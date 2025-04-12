@@ -35,7 +35,13 @@ $stmt->execute(['id' => $issue_id]);
 $issue = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // fetch comments (resolved at bottom)
-$stmt = $conn->prepare("SELECT * FROM iss_comments WHERE iss_id = :id ORDER BY resolved ASC, posted_date DESC");
+$stmt = $conn->prepare("
+    SELECT c.*, p.fname, p.lname
+    FROM iss_comments c
+    JOIN iss_persons p ON c.per_id = p.id
+    WHERE c.iss_id = :id
+    ORDER BY c.posted_date DESC
+");
 $stmt->execute(['id' => $issue_id]);
 $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -87,6 +93,10 @@ if (!empty($issue['pdf_attachment'])) {
         <button type="submit" class="btn btn-danger mb-3">Delete Issue</button>
     </form>
 <?php endif; ?>
+<!-- add comment button to open modal -->
+<button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addCommentModal" data-bs-backdrop="static" data-bs-keyboard="false">
+    Add Comment
+</button>
 
 <hr>
 <h4>Comments</h4>
@@ -95,16 +105,19 @@ $unresolved = array_filter($comments, fn($c) => $c['resolved'] == 0);
 $resolved = array_filter($comments, fn($c) => $c['resolved'] == 1);
 ?>
 
+<!-- unresolved Comments -->
 <?php foreach ($unresolved as $comment):
     $is_comment_owner = $_SESSION['user_id'] == $comment['per_id'] || $_SESSION['admin'] == 'Y';
     ?>
     <div class="border p-2 mb-2">
         <strong><?= htmlspecialchars($comment['short_comment']) ?></strong>
         <p><?= nl2br(htmlspecialchars($comment['long_comment'])) ?></p>
-        <small>Posted on <?= $comment['posted_date'] ?></small>
+        <small>Posted by <?= htmlspecialchars($comment['fname'] . ' ' . $comment['lname']) ?> on <?= $comment['posted_date'] ?></small>
         <?php if ($is_comment_owner): ?>
             <div class="mt-1">
-                <a href="edit_comment.php?id=<?= $comment['id'] ?>" class="btn btn-sm btn-outline-primary">Edit</a>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCommentModal<?= $comment['id'] ?>">
+                    Edit
+                </button>
                 <form method="post" action="toggle_comment_resolved.php" style="display:inline;">
                     <input type="hidden" name="id" value="<?= $comment['id'] ?>">
                     <input type="hidden" name="current_status" value="0">
@@ -114,51 +127,106 @@ $resolved = array_filter($comments, fn($c) => $c['resolved'] == 1);
                     <input type="hidden" name="id" value="<?= $comment['id'] ?>">
                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                 </form>
+                <!--edit comment modal-->
+                <div class="modal fade" id="editCommentModal<?= $comment['id'] ?>" tabindex="-1" aria-labelledby="editCommentModalLabel<?= $comment['id'] ?>" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form method="post" action="edit_comment_modal_handler.php" class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editCommentModalLabel<?= $comment['id'] ?>">Edit Comment</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" name="comment_id" value="<?= $comment['id'] ?>">
+                                <input type="hidden" name="iss_id" value="<?= $issue_id ?>">
+                                <div class="mb-2">
+                                    <label>Short Comment</label>
+                                    <input type="text" name="short_comment" class="form-control" value="<?= htmlspecialchars($comment['short_comment']) ?>" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Long Comment</label>
+                                    <textarea name="long_comment" class="form-control" required><?= htmlspecialchars($comment['long_comment']) ?></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Update Comment</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
     </div>
 <?php endforeach; ?>
 
+<!-- show Resolved Checkbox -->
 <?php if (count($resolved) > 0): ?>
-    <h5 class="text-muted mt-4">Resolved Comments</h5>
+    <form method="get" class="mb-3 mt-4">
+        <input type="hidden" name="id" value="<?= $issue_id ?>">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="showResolvedCheckbox" name="show_resolved" value="1"
+                   onchange="this.form.submit()" <?= isset($_GET['show_resolved']) ? 'checked' : '' ?>>
+            <label class="form-check-label" for="showResolvedCheckbox">
+                Show Resolved Comments
+            </label>
+        </div>
+    </form>
 <?php endif; ?>
 
-<?php foreach ($resolved as $comment):
-    $is_comment_owner = $_SESSION['user_id'] == $comment['per_id'] || $_SESSION['admin'] == 'Y';
-    ?>
-    <div class="border p-2 mb-2 bg-light text-muted">
-        <strong><?= htmlspecialchars($comment['short_comment']) ?> <span class="text-success">&#10003;</span></strong>
-        <p><?= nl2br(htmlspecialchars($comment['long_comment'])) ?></p>
-        <small>Posted on <?= $comment['posted_date'] ?></small>
-        <?php if ($is_comment_owner): ?>
-            <div class="mt-1">
-                <a href="edit_comment.php?id=<?= $comment['id'] ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-                <form method="post" action="toggle_comment_resolved.php" style="display:inline;">
-                    <input type="hidden" name="id" value="<?= $comment['id'] ?>">
-                    <input type="hidden" name="current_status" value="1">
-                    <button type="submit" class="btn btn-sm btn-outline-secondary">Mark Unresolved</button>
-                </form>
-                <form method="post" action="delete_comment.php" style="display:inline;" onsubmit="return confirm('Delete this comment?');">
-                    <input type="hidden" name="id" value="<?= $comment['id'] ?>">
-                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                </form>
+<!-- resolved Comments -->
+<?php if (count($resolved) > 0 && isset($_GET['show_resolved'])): ?>
+    <div class="mt-3">
+        <h5 class="text-muted mt-4">Resolved Comments</h5>
+        <?php foreach ($resolved as $comment): ?>
+            <div class="border p-2 mb-2 bg-light text-muted">
+                <strong><?= htmlspecialchars($comment['short_comment']) ?> <span class="text-success">&#10003;</span></strong>
+                <p><?= nl2br(htmlspecialchars($comment['long_comment'])) ?></p>
+                <small>Posted by <?= htmlspecialchars($comment['fname'] . ' ' . $comment['lname']) ?> on <?= $comment['posted_date'] ?></small>
+                <?php if ($_SESSION['user_id'] == $comment['per_id'] || $_SESSION['admin'] == 'Y'): ?>
+                    <div class="mt-1">
+                        <form method="post" action="toggle_comment_resolved.php" style="display:inline;">
+                            <input type="hidden" name="id" value="<?= $comment['id'] ?>">
+                            <input type="hidden" name="current_status" value="1">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Mark Unresolved</button>
+                        </form>
+                        <form method="post" action="delete_comment.php" style="display:inline;" onsubmit="return confirm('Delete this comment?');">
+                            <input type="hidden" name="id" value="<?= $comment['id'] ?>">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
+        <?php endforeach; ?>
     </div>
-<?php endforeach; ?>
+<?php endif; ?>
 
-<h5 class="mt-4">Add a Comment</h5>
-<form method="post">
-    <div class="mb-2">
-        <label>Short Comment</label>
-        <input type="text" name="short_comment" class="form-control" required>
+<!-- add comment modal -->
+<div class="modal fade" id="addCommentModal" tabindex="-1" aria-labelledby="addCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCommentModalLabel">Add Comment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label>Short Comment</label>
+                    <input type="text" name="short_comment" class="form-control" required>
+                </div>
+                <div class="mb-2">
+                    <label>Long Comment</label>
+                    <textarea name="long_comment" class="form-control" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Add Comment</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </form>
     </div>
-    <div class="mb-2">
-        <label>Long Comment</label>
-        <textarea name="long_comment" class="form-control" required></textarea>
-    </div>
-    <button type="submit" class="btn btn-primary">Add Comment</button>
-<!--    <a href="issues_list.php" class="btn btn-secondary">Back</a>-->
-</form>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

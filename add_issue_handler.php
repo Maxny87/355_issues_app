@@ -3,10 +3,10 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+
 session_start();
 require_once './database/database.php';
-
-if (!isset($_SESSION['user_id'])) { // making sure the user is logged in
+if (!isset($_SESSION['user_id'])) {
     header("Location: login2.php");
     exit();
 }
@@ -80,57 +80,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Add Issue</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="container mt-4">
-<h2>Add New Issue</h2>
-<form method="post" enctype="multipart/form-data" >
-    <div class="mb-3">
-        <label class="form-label">Short Description</label>
-        <input type="text" name="short_description" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Long Description</label>
-        <textarea name="long_description" class="form-control" required></textarea>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Priority</label>
-        <select name="priority" class="form-select" required>
-            <option value="A">High</option>
-            <option value="B">Medium</option>
-            <option value="C">Low</option>
-        </select>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Project</label>
-        <input type="text" name="project" class="form-control">
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Organization</label>
-        <input type="text" name="org" class="form-control">
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Issue For (User)</label>
-        <select name="per_id" class="form-select" required>
-            <?php foreach ($users as $user): ?>
-                <option value="<?= $user['id'] ?>" <?= ($user['id'] == ($_SESSION['user_id'] ?? 0)) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($user['fname'] . ' ' . $user['lname']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">PDF Attachment (Max 2MB)</label>
-        <input type="file" name="pdf_attachment" accept="application/pdf" class="form-control">
-    </div>
-    <button type="submit" class="btn btn-success">Submit</button>
-    <a href="issues_list.php" class="btn btn-secondary">Back</a>
-</form>
-</body>
-</html>

@@ -1,15 +1,23 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 require_once './database/database.php';
 
-if (!isset($_SESSION['user_id'])) { // making sure the user is logged in
+$conn = new PDO($connstring, $db_user, $db_pass);
+$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+// Ensure user is logged in
+if (!isset($_SESSION['user_id'])) {
     header("Location: login2.php");
     exit();
 }
 
-if ($_SESSION['admin'] !== 'Y') die("Access denied."); // making sure the user logged in is an admin
+// Ensure user is admin
+if ($_SESSION['admin'] !== 'Y') die("Access denied.");
 
-// adding the user when the form gets here twice
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fname = trim($_POST['fname']);
     $lname = trim($_POST['lname']);
@@ -20,15 +28,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $hashed = password_hash($password, PASSWORD_DEFAULT);
 
+    // Check if email already exists
     $stmt = $conn->prepare("SELECT COUNT(*) FROM iss_persons WHERE email = ?");
     $stmt->execute([$email]);
-    // need to make sure email does not exist already
     if ($stmt->fetchColumn() > 0) {
         die("Email already exists.");
     }
 
-    $conn = new PDO($connstring, $db_user, $db_pass);
-    $stmt = $conn->prepare("INSERT INTO iss_persons (fname, lname, email, mobile, pwd_hash, admin) VALUES (?, ?, ?, ?, ?, ?)");
+    // Insert new user
+    $stmt = $conn->prepare("
+        INSERT INTO iss_persons 
+        (fname, lname, email, mobile, pwd_hash, admin, active, activation_code, activation_expiry) 
+        VALUES (?, ?, ?, ?, ?, ?, 1, NULL, NULL)
+    ");
     $stmt->execute([$fname, $lname, $email, $mobile, $hashed, $admin]);
 
     header("Location: list_users.php");
