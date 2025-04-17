@@ -41,33 +41,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // using more secure method to hash and generate salts
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-            $activation_code = bin2hex(random_bytes(16));
-            $hashed_activation_code = password_hash($activation_code, PASSWORD_DEFAULT);
-
-            $activation_link = "http://localhost/iss/355_issues_app/activate.php?email={$email}&activation_code={$activation_code}";
-
-            $subject = 'Issues App Activation Link';
-            $message = <<<MSG
-                Hi,
-                This is an email to activate your account for the issues app.
-                Click the link below to activate your account. 
-                {$activation_link}
-            MSG;
-            mail($email, $subject, $message);
+//            $activation_code = bin2hex(random_bytes(16));
+////            $hashed_activation_code = password_hash($activation_code, PASSWORD_DEFAULT);
+//            $activation_expiry = date('Y-m-d H:i:s', strtotime('+1 day'));
+//
+//            $activation_link = "http://localhost/iss/355_issues_app/activate.php?email={$email}&activation_code={$activation_code}";
+//
+//            $subject = 'Issues App Activation Link';
+//            $message = <<<MSG
+//                Hi,
+//                This is an email to activate your account for the issues app.
+//                Click the link below to activate your account.
+//                {$activation_link}
+//            MSG;
+//            mail($email, $subject, $message);
 
             // insert the new user into the iss_persons table
-            $stmt = $conn->prepare("INSERT INTO iss_persons (fname, lname, mobile, email, pwd_hash, admin) VALUES (:fname, :lname, :mobile, :email, :pwd_hash, :admin)");
+            $stmt = $conn->prepare("INSERT INTO iss_persons 
+                (fname, lname, mobile, email, pwd_hash, admin, active, activation_code, activation_expiry) 
+                VALUES 
+                (:fname, :lname, :mobile, :email, :pwd_hash, 'N', 1, :activation_code, :activation_expiry)");
+
             $result = $stmt->execute([
-                'fname'     => $fname,
-                'lname'     => $lname,
-                'mobile'    => $mobile,
-                'email'     => $email,
-                'pwd_hash'  => $hashed_password,
-                'admin'     => 'N'
+                'fname' => $fname,
+                'lname' => $lname,
+                'mobile' => $mobile,
+                'email' => $email,
+                'pwd_hash' => $hashed_password,
+                'activation_code' => null,
+                'activation_expiry' => null
             ]);
 
             if ($result) {
-                $success = "Registration successful! You can now <a href='login2.php'>login</a>.";
+                $success = "Registration successful! Please check your email to activate your account before logging in.";
             } else {
                 $error = "Registration failed. Please try again.";
             }

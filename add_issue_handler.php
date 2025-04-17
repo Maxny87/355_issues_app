@@ -23,6 +23,19 @@ try {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
+        // validate priority
+        $valid_priorities = ['A', 'B', 'C'];
+        if (!in_array($_POST['priority'], $valid_priorities)) {
+            die("Invalid priority value.");
+        }
+
+        // validate per_id (must exist in users table)
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM iss_persons WHERE id = ?");
+        $stmt->execute([$_POST['per_id']]);
+        if ($stmt->fetchColumn() == 0) {
+            die("Invalid user assignment.");
+        }
+
         $newFileName = null;
         if (isset($_FILES['pdf_attachment']) && $_FILES ['pdf_attachment']['error'] === UPLOAD_ERR_OK) {
             $fileTmpPath = $_FILES['pdf_attachment']['tmp_name'];

@@ -56,6 +56,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
+    $valid_priorities = ['A', 'B', 'C'];
+    if (!in_array($_POST['priority'], $valid_priorities)) {
+        die("Invalid priority value.");
+    }
+
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM iss_persons WHERE id = ?");
+    $stmt->execute([$_POST['per_id']]);
+    if ($stmt->fetchColumn() == 0) {
+        die("Invalid user assignment.");
+    }
 
     $stmt = $conn->prepare("UPDATE iss_issues 
     SET short_description = :short, long_description = :long, priority = :priority, 

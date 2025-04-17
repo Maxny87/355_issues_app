@@ -26,23 +26,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Please enter both email and password.";
     } else {
         // prepare the SQL statement to prevent SQL injection
-        $stmt = $conn->prepare("SELECT id, fname, lname, pwd_hash, admin FROM iss_persons WHERE email = ?");
+        $stmt = $conn->prepare("SELECT id, fname, lname, pwd_hash, admin, active FROM iss_persons WHERE email = ?");
         $stmt->bindValue(1, $email, PDO::PARAM_STR);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // check if the email exists in the database
         if ($row) {
-            if (password_verify($password, $row['pwd_hash'])) {
+            if ($row['active'] != 1) {
+                $error = "Your account is not yet activated. Please check your email.";
+                session_destroy();
+            } elseif (password_verify($password, $row['pwd_hash'])) {
                 $_SESSION['user_id'] = $row['id'];
                 $_SESSION['fname'] = $row['fname'];
                 $_SESSION['lname'] = $row['lname'];
                 $_SESSION['admin'] = $row['admin'];
-
                 header("Location: issues_list.php");
                 exit();
             } else {
-
                 $error = "Invalid email or password.";
                 session_destroy();
             }
